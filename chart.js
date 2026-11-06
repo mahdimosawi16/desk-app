@@ -25,7 +25,8 @@
 
   /* range = {start, points:[[iso,v]], marks:[{ts,kind,text,value}]} */
   function line(canvas, range, key) {
-    var pts = (range && range.points) || [], marks = (range && range.marks) || [];
+    var pts = ((range && range.points) || []).slice(), marks = (range && range.marks) || [];
+    if (pts.length === 1) pts.push([new Date().toISOString(), pts[0][1]]);  // flat line up to now
     var prev = canvas._prev || {}, sameKey = prev.key === key;
     var grow = sameKey && prev.n && pts.length > prev.n && !reduced();
     var oldMarks = sameKey ? (prev.marks || {}) : null;
@@ -66,14 +67,16 @@
       }
       // fill
       var g = ctx.createLinearGradient(0, top, 0, H);
-      g.addColorStop(0, "rgba(0,211,90,0.28)"); g.addColorStop(1, "rgba(0,211,90,0)");
+      g.addColorStop(0, "rgba(0,211,90,0.22)"); g.addColorStop(1, "rgba(0,211,90,0)");
       ctx.beginPath(); ctx.moveTo(xy[0][0], H);
       xy.forEach(function (q) { ctx.lineTo(q[0], q[1]); });
       ctx.lineTo(xy[xy.length - 1][0], H); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
       ctx.beginPath(); xy.forEach(function (q, i) { i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
-      ctx.strokeStyle = C.green; ctx.lineWidth = 2.2; ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke();
+      ctx.strokeStyle = C.green; ctx.lineWidth = 1.8; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(0,211,90,0.55)"; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
       // live dot
       var e = xy[xy.length - 1];
+      ctx.beginPath(); ctx.arc(e[0], e[1], 9, 0, 7); ctx.fillStyle = "rgba(0,211,90,0.22)"; ctx.fill();
       ctx.beginPath(); ctx.arc(e[0], e[1], 4.5, 0, 7); ctx.fillStyle = C.green; ctx.fill();
       // marks, labels never overlap
       ctx.font = FONT; var placed = [];

@@ -63,7 +63,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* chart */
 .chartbox{position:relative;margin-top:18px;height:240px}
 .chartbox canvas{width:100%;height:100%;display:block}
-.chartempty{position:absolute;left:0;right:0;top:50%;transform:translateY(-130%);text-align:center;color:var(--sec);font-size:15px}
+.chartempty{position:absolute;left:0;right:0;bottom:2px;text-align:center;color:var(--sec);font-size:15px}
 .ranges{display:flex;justify-content:space-between;padding:10px var(--g) 0}
 .ranges button{min-width:48px;min-height:44px;border-radius:16px;font:600 14px var(--textf);color:var(--sec)}
 .ranges button.on{color:var(--text);background:var(--card)}
@@ -196,3 +196,47 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{transition:none!important;animation:none!important}
 }
+
+/* ---- Home look (Mahdi's screenshot) ---- */
+:root{--purple:#bf5af2;--ccw:calc((100vw - 32px - 12px) / 2.1)}
+.logo{width:36px;height:36px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:0 0 36px}
+.logo svg{width:20px;height:20px}
+.runbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:18px;background:var(--green);color:#003d17;font:600 16px var(--textf);min-width:44px;margin-left:4px}
+.runbtn svg{width:10px;height:12px;fill:#003d17}
+.runbtn.running{background:rgba(0,211,90,.16);color:var(--green)}
+.runbtn.running svg{fill:var(--green)}
+.fomoline{white-space:nowrap;overflow:hidden;display:flex;align-items:center;gap:6px;padding:0 var(--g);margin-top:-2px;font-size:14px;color:var(--sec);font-variant-numeric:tabular-nums;min-height:28px}
+.fomoline .fm{width:16px;height:16px;border-radius:5px;background:#fff;display:grid;place-items:center}
+.fomoline .fm svg{width:10px;height:10px}
+.fomoline a{color:var(--text);font-weight:600}
+.fomoline .on{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.fomoline .on.off{background:var(--red)}
+.chg{font-size:17px;font-weight:500}
+.ranges2{display:flex;justify-content:space-between;align-items:center;padding:12px var(--g) 14px;border-bottom:.5px solid var(--sep)}
+.ranges2 button{min-width:44px;min-height:36px;padding:0 12px;border-radius:18px;font:600 14px var(--textf);color:var(--green)}
+.ranges2 button.on{background:var(--green);color:#002b10}
+.sechead .ready{color:var(--green);font-size:17px;font-weight:500}
+.sechead .seeall{color:var(--green)}
+.carousel2{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 var(--g);scrollbar-width:none;scroll-padding:0 var(--g)}
+.carousel2::-webkit-scrollbar{display:none}
+.mcard{flex:0 0 var(--ccw);width:var(--ccw);aspect-ratio:1/1.08;border-radius:18px;background:var(--card);scroll-snap-align:start;padding:14px;display:flex;flex-direction:column;overflow:hidden}
+.mascot{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:0 0 48px}
+.mascot svg{width:34px;height:34px}
+.mcard .nm{font:700 17px var(--textf);margin-top:12px}
+.mcard .st{font-size:14px;margin-top:3px;display:flex;align-items:center;gap:5px;font-weight:500}
+.mcard .st i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.mcard .wt{color:var(--sec);font-size:13px;margin-top:auto}
+.mcard .live{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--sec);font-variant-numeric:tabular-nums;min-width:0}
+.mcard .live b{color:var(--text);font:700 20px var(--display)}
+.mcard .live .one{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcard .strips{gap:4px}.mcard .strip{height:12px;border-radius:4px;font-size:0}
+.mcard .bar{height:6px}
+.mcard .pill{height:20px;font-size:11px;padding:0 7px}
+.pdots{display:flex;justify-content:center;gap:7px;padding:12px 0 0}
+.pdots i{width:7px;height:7px;border-radius:50%;background:var(--ter);transition:background .2s}
+.pdots i.on{background:var(--text)}
+.fcard .rich{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.fcard .rich .astat{margin-top:0}
+.nav .navtitle{white-space:nowrap;min-width:0}
+.nav .iconbtn{width:40px}
+.runbtn{padding:0 14px;white-space:nowrap}

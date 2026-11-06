@@ -5,7 +5,19 @@
   "use strict";
   var API = "https://utlybsuqokbgjlzgtlmo.supabase.co/functions/v1/desk/d/";
   var POLL_MS = 15000, PAGE = 30, AGENT_ORDER = ["scanner", "auditor", "analyst", "executor", "risk"];
-  var COLORS = { scanner: "var(--cyan)", auditor: "var(--blue)", analyst: "var(--yellow)", executor: "var(--green)", risk: "var(--pink)" };
+  var COLORS = { scanner: "var(--cyan)", auditor: "var(--blue)", analyst: "var(--yellow)", executor: "var(--purple)", risk: "var(--pink)" };
+  var ICON_BG = { scanner: "#64d2ff", auditor: "#0a84ff", analyst: "#ff453a", executor: "#bf5af2", risk: "#ff6b9a" };
+  var EYES = '<circle cx="15" cy="19" r="2.3" fill="#000"/><circle cx="25" cy="19" r="2.3" fill="#000"/>';
+  var MASCOT = {  // simple drawn characters, no external images
+    scanner: '<path d="M20 3l4.6 9.6 10.4 1.4-7.6 7.2 1.9 10.4L20 26.6l-9.3 5 1.9-10.4L5 14l10.4-1.4z" fill="#fff"/>' + EYES,
+    auditor: '<circle cx="18" cy="18" r="11" fill="#fff"/><path d="M26 26l8 8" stroke="#fff" stroke-width="5" stroke-linecap="round"/>' + '<circle cx="14" cy="17" r="2.2" fill="#000"/><circle cx="22" cy="17" r="2.2" fill="#000"/>',
+    analyst: '<path d="M8 22c-2-9 4-16 12-16s15 5 13 14c-1 6 2 9-3 12s-9-1-13 0-9 2-9-10z" fill="#fff"/>' + EYES + '<path d="M16 25q4 3 8 0" stroke="#000" stroke-width="1.8" fill="none" stroke-linecap="round"/>',
+    executor: '<rect x="8" y="10" width="24" height="21" rx="7" fill="#fff"/><path d="M20 10V5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="4.5" r="2.4" fill="#fff"/>' + EYES + '<rect x="15" y="24" width="10" height="2.4" rx="1.2" fill="#000"/>',
+    risk: '<path d="M20 4l13 5v9c0 9-6 15-13 18C13 33 7 27 7 18V9z" fill="#fff"/>' + EYES
+  };
+  var GROK = '<svg viewBox="0 0 24 24"><path d="M4 19 19 4M9 4h11v11" stroke="#000" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>';
+  var FOMO_MARK = '<svg viewBox="0 0 10 10"><path d="M2 1h6v2H4v1.6h3.4v2H4V9H2z" fill="#000"/></svg>';
+  var PLAY = '<svg viewBox="0 0 10 12"><path d="M0 0l10 6-10 6z"/></svg>';
 
   var m = location.hash.match(/^#d=([A-Za-z0-9]{32,128})$/);
   if (m) { localStorage.setItem("deskPath", m[1]); history.replaceState(null, "", location.pathname + location.search + "#home"); }
@@ -183,6 +195,39 @@
     }
     return "";
   }
+  function miniLive(a) {
+    var c = a.card || {};
+    if (a.name === "scanner") {
+      var f = (c.feed || [])[0];
+      return "<b>" + a.today + "</b><span class=\"one\">pools · " + (f ? esc(f.label) + " " + esc(f.verdict === "pass" ? "→ auditor" : f.reason) : "Listening for graduations") + "</span>";
+    }
+    if (a.name === "auditor") {
+      var L = c.latest;
+      return strips(L && L.layers, L && !L.done) + '<span class="one">' + c.takenApart + " taken apart · " + c.rejected + " rejected</span>";
+    }
+    if (a.name === "analyst") {
+      var v = c.latest;
+      return "<b>" + (v && v.score != null ? Math.round(v.score) : "–") + '</b><span class="one">' + (v ? esc(v.label) + " · " + (v.pass ? "pass" : esc(v.reason || "reject")) : "Scoring") + "</span>";
+    }
+    if (a.name === "executor") {
+      var e = c.latest, done = e && e.status === "bought";
+      return "<b>" + c.trades + '</b><span class="one">' + (e ? money(e.sizeUsd) + " · " + (+e.stackPct).toFixed(1) + "% of stack" : "trades") + "</span>" +
+        '<div class="bar"><i style="width:' + (done ? 100 : 0) + '%"></i></div>';
+    }
+    if (a.name === "risk") {
+      return "<b>" + (c.guarding && c.open ? "Guarding" : c.lastExit ? esc(c.lastExit.kind) : "Guarding") + '</b><div class="pills"><span class="pill red">' + esc(c.stopPill) + '</span><span class="pill green">' + esc(c.trailPill) + "</span></div>";
+    }
+    return "";
+  }
+  function miniCard(a, s) {
+    var running = s.deskRunning && !a.paused;
+    var stTxt = a.paused ? "Paused" : running ? "Running" : "Ready";
+    var col = a.paused ? "var(--orange)" : COLORS[a.name];
+    return '<a class="mcard" href="#agents/' + a.name + '"><span class="mascot" style="background:' + ICON_BG[a.name] + '"><svg viewBox="0 0 40 40">' + MASCOT[a.name] + "</svg></span>" +
+      '<div class="nm">' + esc(a.title) + '</div><div class="st" style="color:' + col + '"><i></i>' + stTxt + "</div>" +
+      (running ? '<div class="live">' + miniLive(a) + "</div>" : '<div class="wt">' + (a.paused ? "pause via Telegram" : "waiting for Run") + "</div>") + "</a>";
+  }
+
   function execAnim() {
     var bar = view.querySelector("i[data-exec]:not([data-exec=''])");
     if (!bar) return;
@@ -206,25 +251,39 @@
     var balTxt = money(s.balance), mult = (s.multiplier || 1).toFixed(2) + "×";
     var allMarks = ch.ranges.ALL.marks.length, r = ch.ranges[ui.range];
     var agents = AGENT_ORDER.map(function (n) { return ag.agents.filter(function (a) { return a.name === n; })[0]; }).filter(Boolean);
-    var html = '<div class="nav"><a class="avatar" href="#account" aria-label="Account">M</a>' +
+    var up = (s.todayUsd || 0) >= 0, online = s.online && !offline;
+    var run = s.deskRunning ? ext(s.pauseUrl, "Running " + PLAY, "runbtn running") : ext(s.runUrl, "Run " + PLAY, "runbtn");
+    var html = '<div class="nav"><a class="logo" href="#account" aria-label="Account">' + GROK + "</a>" +
       '<a class="navtitle" href="#agents">Grok Bot <span class="chev">›</span></a>' +
       '<button class="iconbtn" id="searchBtn" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg></button>' +
-      '<a class="iconbtn" href="#activity" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/></svg>' + (unread(s) ? '<span class="dot"></span>' : "") + "</a></div>" +
+      '<a class="iconbtn" href="#activity" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/></svg>' + (unread(s) ? '<span class="dot"></span>' : "") + "</a>" +
+      run + "</div>" +
+      '<div class="fomoline"><span class="fm">' + FOMO_MARK + "</span>" + ext(s.profileUrl, "fomo") + " · " + esc(s.fomoHandle) + " · " +
+      "stack " + money(s.stack) + ' · <span class="on' + (online ? "" : " off") + '" role="img" aria-label="' + (online ? "desk online" : "desk offline") + '"></span></div>' +
       fixtureTag(s) +
       '<div class="bal"><div class="balrow"><div class="big" id="bal">' + odoHtml(balTxt, odoPrev) + "</div>" + paperPill(s) + "</div>" +
-      '<div class="sub"><span class="' + (s.todayPct >= 0 ? "up" : "down") + '">' + signedPct(s.todayPct) + '</span><span class="muted">today</span>' +
+      '<div class="sub"><span class="chg ' + (up ? "up" : "down") + '">' + (up ? "▲ " : "▼ ") + money(Math.abs(s.todayUsd || 0)) + " (" + Math.abs(s.todayPct || 0).toFixed(2) + "%)</span>" +
       '<span class="pill ' + (s.multiplier >= 1 ? "green" : "red") + '">' + mult + "</span></div></div>" +
       '<div class="chartbox"><canvas id="lc"></canvas>' + (allMarks ? "" : '<div class="chartempty">Waiting for the first trade</div>') + "</div>" +
-      '<div class="ranges">' + ["LIVE", "1H", "4H", "1D", "1W", "ALL"].map(function (k) { return '<button data-range="' + k + '" class="' + (k === ui.range ? "on" : "") + '">' + k + "</button>"; }).join("") + "</div>" +
-      '<div class="sechead"><h2>Agents <span class="muted">· ' + ag.running + ' running</span></h2></div>' +
-      '<div class="carousel" id="car">' + agents.map(function (a) { return '<a class="acard" href="#agents/' + a.name + '">' + head(a, a.paused ? "paused" : "") + cardBody(a) + "</a>"; }).join("") + "</div>" +
-      '<div class="sechead"><h2>Activity</h2><a href="#activity">See all</a></div>' +
-      (act.items.length ? '<div class="list">' + act.items.slice(0, 5).map(actRow).join("") + "</div>" : '<div class="list"><div class="empty">Nothing yet tonight</div></div>');
+      '<div class="ranges2">' + ["LIVE", "1H", "4H", "1D", "1W", "ALL"].map(function (k) { return '<button data-range="' + k + '" class="' + (k === ui.range ? "on" : "") + '">' + (k === ui.range ? "• " : "") + k + "</button>"; }).join("") + "</div>" +
+      '<div class="sechead"><h2>Agents</h2><span class="ready">' + (s.deskRunning ? ag.running + " running" : (s.readyCount != null ? s.readyCount : ag.running) + " ready") + "</span></div>" +
+      '<div class="carousel2" id="car">' + agents.map(function (a) { return miniCard(a, s); }).join("") + "</div>" +
+      '<div class="pdots" id="pdots">' + agents.map(function (_, i) { return "<i" + (i === 0 ? ' class="on"' : "") + "></i>"; }).join("") + "</div>" +
+      '<div class="sechead"><h2>Activity</h2><a class="seeall" href="#activity">See all</a></div>' +
+      (act.items.length ? '<div class="list">' + act.items.slice(0, 5).map(actRow).join("") + "</div>" : '<div class="list"><div class="empty">No trades yet</div></div>');
     var after = function () {
-      DeskChart.line(document.getElementById("lc"), allMarks ? r : { start: r.start, points: [], marks: [] }, ui.range);
-      odoRun(); odoPrev = balTxt; execAnim();
+      DeskChart.line(document.getElementById("lc"), r, ui.range);
+      odoRun(); odoPrev = balTxt;
       view.querySelectorAll("[data-range]").forEach(function (b) { b.onclick = function () { ui.range = b.dataset.range; render(); }; });
       document.getElementById("searchBtn").onclick = function () { ui.search = true; render(); };
+      var car = document.getElementById("car"), dots = document.querySelectorAll("#pdots i");
+      function sync() {
+        var first = car.firstElementChild; if (!first) return;
+        var step = first.offsetWidth + 12, max = car.scrollWidth - car.clientWidth;
+        var i = car.scrollLeft >= max - 2 ? dots.length - 1 : Math.round(car.scrollLeft / step);
+        dots.forEach(function (d, k) { d.classList.toggle("on", k === i); });
+      }
+      car.addEventListener("scroll", sync, { passive: true }); sync();
     };
     return { html: html, after: after };
   }
@@ -244,12 +303,13 @@
         }).join("") : '<div class="dec"><span class="l muted">' + ({ scanner: "Listening for graduations", auditor: "No coin taken apart yet" }[n] || "Nothing yet tonight") + "</span></div>";
         return '<section class="fcard" id="ag-' + n + '"><div class="ahead"><span class="status ' + st + '"></span>' + esc(a.title) +
           '<span class="right">' + a.today + " today</span></div>" +
+          '<div class="rich">' + cardBody(a) + "</div>" +
           '<div class="toggle"><div><div>Paused</div><div class="hint">' + esc("pause via Telegram") + " · <code>pause " + n + "</code></div></div>" +
           '<span class="sw-ui ' + (a.paused ? "on" : "") + '" role="switch" aria-checked="' + a.paused + '" aria-disabled="true"></span></div>' +
           '<div class="hint" style="padding:10px 0 6px">Last 20 decisions</div>' + decs +
           '<a class="linkrow" href="#account/' + n + '"><span>Settings</span><span>›</span></a></section>';
       }).join("");
-    return { html: html, after: function () { if (r.arg) { var el = document.getElementById("ag-" + r.arg); if (el) el.scrollIntoView(); } } };
+    return { html: html, after: function () { execAnim(); if (r.arg) { var el = document.getElementById("ag-" + r.arg); if (el) el.scrollIntoView(); } } };
   }
 
   function activityTab() {
