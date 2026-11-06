@@ -195,6 +195,21 @@
     }
     return "";
   }
+  function walletMeta(w) {
+    return "on-chain Solana · " + (w.updated_ts ? "updated " + hm(w.updated_ts) : "not read yet") +
+      (w.stale ? ' · <span class="stale">stale</span>' : "") + (w.unpriced ? " · " + w.unpriced + " unpriced" : "");
+  }
+  function walletGroup(w) {
+    if (!w) return '<div class="group"><div class="gh"><span>On-chain Solana wallet</span></div><div class="list"><div class="kv"><div class="k">Not set<div class="t2">wallet &lt;address&gt; in Telegram</div></div></div></div></div>';
+    var amt = function (x) { return (+x).toLocaleString("en-US", { maximumFractionDigits: x >= 1 ? 2 : 6 }); };
+    var rows = '<div class="kv"><div class="k">Total<div class="t2">' + walletMeta(w) + '</div></div><div class="v">' + (w.usd == null ? "n/a" : money(w.usd)) + "</div></div>" +
+      '<div class="kv"><div class="k">SOL<div class="t2">' + (w.sol == null ? "n/a" : amt(w.sol)) + ' SOL</div></div><div class="v">' + (w.solUsd == null ? "unpriced" : money(w.solUsd)) + "</div></div>" +
+      (w.tokens && w.tokens.length ? w.tokens.map(function (t) {
+        return ext(t.link, '<div class="k">' + esc(t.symbol) + '<div class="t2">' + amt(t.amount) + '</div></div><div class="v">' + (t.usd == null ? '<span class="ter">unpriced</span>' : money(t.usd)) + "</div>", "kv link");
+      }).join("") : '<div class="kv"><div class="k muted">No SPL tokens</div></div>');
+    return '<div class="group" id="set-wallet"><div class="gh"><span>On-chain Solana wallet</span><span>read-only · not your FOMO in-app balance</span></div><div class="list">' + rows + "</div></div>";
+  }
+
   function miniLive(a) {
     var c = a.card || {};
     if (a.name === "scanner") {
@@ -259,7 +274,9 @@
       '<a class="iconbtn" href="#activity" aria-label="Activity"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/></svg>' + (unread(s) ? '<span class="dot"></span>' : "") + "</a>" +
       run + "</div>" +
       '<div class="fomoline"><span class="fm">' + FOMO_MARK + "</span>" + ext(s.profileUrl, "fomo") + " · " + esc(s.fomoHandle) + " · " +
-      "stack " + money(s.stack) + ' · <span class="on' + (online ? "" : " off") + '" role="img" aria-label="' + (online ? "desk online" : "desk offline") + '"></span></div>' +
+      (s.wallet ? "wallet " + (s.wallet.usd == null ? "n/a" : money(s.wallet.usd)) : "stack " + money(s.stack)) +
+      ' · <span class="on' + (online ? "" : " off") + '" role="img" aria-label="' + (online ? "desk online" : "desk offline") + '"></span></div>' +
+      (s.wallet ? '<div class="walletline">' + walletMeta(s.wallet) + "</div>" : "") +
       fixtureTag(s) +
       '<div class="bal"><div class="balrow"><div class="big" id="bal">' + odoHtml(balTxt, odoPrev) + "</div>" + paperPill(s) + "</div>" +
       '<div class="sub"><span class="chg ' + (up ? "up" : "down") + '">' + (up ? "▲ " : "▼ ") + money(Math.abs(s.todayUsd || 0)) + " (" + Math.abs(s.todayPct || 0).toFixed(2) + "%)</span>" +
@@ -336,7 +353,7 @@
       '<div class="group"><div class="list">' +
       ext(a.profileUrl, '<div class="k">Your FOMO profile<div class="t2">@' + esc(a.fomoHandle) + '</div></div><div class="v">Open ›</div>', "kv link") +
       '<button class="kv link" id="invite" style="width:100%;text-align:left"><div class="k">Invite a friend<div class="t2">FOMO sign-up link</div></div><div class="v">Share ›</div></button>' +
-      "</div></div>" +
+      "</div></div>" + walletGroup(s && s.wallet) +
       a.groups.map(function (g) {
         return '<div class="group" id="set-' + esc(g.anchor) + '"><div class="gh"><span>' + esc(g.title) + '</span><span>read-only · change with <code>set</code> in Telegram</span></div><div class="list">' +
           g.items.map(function (it) { return '<div class="kv"><div class="k">' + esc(it.key) + '<div class="t2">' + esc(it.telegram) + '</div></div><div class="v">' + esc(it.value) + "</div></div>"; }).join("") + "</div></div>";
