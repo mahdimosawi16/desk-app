@@ -197,7 +197,7 @@
   }
   function walletMeta(w) {
     return "on-chain Solana · " + (w.updated_ts ? "updated " + hm(w.updated_ts) : "not read yet") +
-      (w.stale ? ' · <span class="stale">stale</span>' : "") + (w.unpriced ? " · " + w.unpriced + " unpriced" : "");
+      (w.stale || (w.updated_ts && Date.now() - Date.parse(w.updated_ts) > 180000) ? ' · <span class="stale">stale</span>' : "") + (w.unpriced ? " · " + w.unpriced + " unpriced" : "");
   }
   function walletGroup(w) {
     if (!w) return '<div class="group"><div class="gh"><span>On-chain Solana wallet</span></div><div class="list"><div class="kv"><div class="k">Not set<div class="t2">wallet &lt;address&gt; in Telegram</div></div></div></div></div>';
