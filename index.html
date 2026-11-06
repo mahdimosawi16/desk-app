@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="referrer" content="no-referrer">
+<title>Desk</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>body{background:#0b0f14;color:#e5e7eb;font:16px -apple-system,system-ui,sans-serif;margin:0;padding:24px}
+.card{background:#111827;border-radius:16px;padding:16px;margin:12px 0}.muted{color:#9ca3af}</style>
+</head>
+<body>
+<h1>Desk</h1>
+<p class="muted">Placeholder. The iPhone UI comes in a later step.</p>
+<div class="card" id="state">Waiting for data…</div>
+<script>
+// Data lives on the public data host below. The data path is NOT in this file:
+// open the app once as  .../#d=<data path> ; it is kept in localStorage and removed from the address bar.
+(function(){
+  var API = "https://utlybsuqokbgjlzgtlmo.supabase.co/functions/v1/desk/d/";
+  var m = location.hash.match(/^#d=([A-Za-z0-9]{32,128})$/);
+  if (m) localStorage.setItem("deskPath", m[1]);
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  var p = localStorage.getItem("deskPath");
+  var el = document.getElementById("state");
+  if (!p) { el.textContent = "No data path set. Open the link from the desk once."; return; }
+  function load(){
+    fetch(API + encodeURIComponent(p) + "/state.json", {cache: "no-store"})
+      .then(function(r){ if (!r.ok) throw r.status; return r.json(); })
+      .then(function(s){ el.textContent = s.mode + " · stack $" + s.stack + " · updated " + s.ts; })
+      .catch(function(e){ el.textContent = "No data (" + e + ")"; });
+  }
+  load(); setInterval(load, 15000);
+})();
+</script>
+</body>
+</html>
