@@ -1,40 +1,29 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Desk">
+<meta name="theme-color" content="#000000">
 <meta name="referrer" content="no-referrer">
 <title>Desk</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>body{background:#0b0f14;color:#e5e7eb;font:16px -apple-system,system-ui,sans-serif;margin:0;padding:24px}
-.card{background:#111827;border-radius:16px;padding:16px;margin:12px 0}.muted{color:#9ca3af}</style>
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-<h1>Desk</h1>
-<p class="muted">Placeholder. The iPhone UI comes in a later step.</p>
-<div class="card" id="state">Waiting for data…</div>
-<script>
-// Data lives on the public data host below. The data path is NOT in this file:
-// open the app once as  .../#d=<data path> ; it is kept in localStorage and removed from the address bar.
-(function(){
-  var API = "https://utlybsuqokbgjlzgtlmo.supabase.co/functions/v1/desk/d/";
-  var m = location.hash.match(/^#d=([A-Za-z0-9]{32,128})$/);
-  if (m) localStorage.setItem("deskPath", m[1]);
-  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
-  var p = localStorage.getItem("deskPath");
-  var el = document.getElementById("state");
-  if (!p) { el.textContent = "No data path set. Open the link from the desk once."; return; }
-  function load(){
-    fetch(API + encodeURIComponent(p) + "/state.json", {cache: "no-store"})
-      .then(function(r){ if (!r.ok) throw r.status; return r.json(); })
-      .then(function(s){ el.textContent = s.mode + " · stack $" + s.stack + " · updated " + s.ts; })
-      .catch(function(e){ el.textContent = "No data (" + e + ")"; });
-  }
-  load(); setInterval(load, 15000);
-})();
-</script>
+<div id="offline" class="offline" hidden></div>
+<main id="view" class="view"></main>
+<nav class="tabbar" id="tabbar">
+  <a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z"/></svg><span>Home</span></a>
+  <a href="#agents" data-tab="agents"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span>Agents</span></a>
+  <a href="#activity" data-tab="activity"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Activity</span></a>
+  <a href="#account" data-tab="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M3.5 21c.8-4.4 4.2-7 8.5-7s7.7 2.6 8.5 7z"/></svg><span>Account</span></a>
+</nav>
+<script src="chart.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
